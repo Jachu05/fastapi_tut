@@ -1,5 +1,8 @@
+import time
 from typing import Optional
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 
@@ -21,6 +24,24 @@ my_post = [
 N = 2
 
 
+port = 5433
+
+while True:
+    try:
+        conn = psycopg2.connect(host='localhost',
+                                database='fastapi_tut',
+                                user='postgres',
+                                password='password',
+                                cursor_factory=RealDictCursor,
+                                port=5433)
+        cursor = conn.cursor()
+        print('database connection was successful')
+        break
+    except Exception as error:
+        print("connecting to database failed", error)
+        time.sleep(2)
+
+
 def find_post(idx):
     for p in my_post:
         if p["id"] == idx:
@@ -40,7 +61,10 @@ async def root():
 
 @app.get("/posts")
 async def root():
-    return {"message": my_post}
+    cursor.execute("""select * from posts""")
+    posts = cursor.fetchall()
+    print(posts)
+    return {"message": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
