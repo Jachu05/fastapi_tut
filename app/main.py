@@ -1,6 +1,7 @@
 import time
 from typing import Optional
 
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, Response, status, HTTPException
@@ -33,7 +34,7 @@ while True:
                                 user='postgres',
                                 password='password',
                                 cursor_factory=RealDictCursor,
-                                port=5433)
+                                port=5432)
         cursor = conn.cursor()
         print('database connection was successful')
         break
