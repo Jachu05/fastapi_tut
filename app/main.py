@@ -23,7 +23,6 @@ my_post = [
 
 N = 2
 
-
 port = 5433
 
 while True:
@@ -71,15 +70,18 @@ async def root():
 def create_post(post: Post):
     global N
     N += 1
-    post_dict = post.dict()
-    post_dict['id'] = N
-    my_post.append(post_dict)
-    return {"data": my_post}
+    cursor.execute("""insert into posts (title, content, published) values (%s, %s, %s) returning *""",
+                   (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return {"data": new_post}
 
 
 @app.get("/posts/{idx}")
 def get_post(idx: int):
-    post = find_post(idx)
+    cursor.execute("""select * from posts where id = %s""", (idx,))
+    post = cursor.fetchone()
+
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'post with id: {idx} was not found')
@@ -96,6 +98,7 @@ def get_post(idx: int):
 
 @app.delete("/posts/{idx}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(idx: int):
+    cursor.execute("""delete from posts where id = %s returning *""", (idx,))
     index = find_index_post(idx)
 
     if index is None:
