@@ -1,26 +1,18 @@
 import time
-from typing import Optional
 
 import psycopg2
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 # import app.models as models
 from . import models
 from .database import engine, get_db
+from .schemas import PostCreate, PostResponse
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-
 
 my_post = [
     {'title': 'asdasd', 'content': 'xdxdxdxd', 'id': 1},
@@ -62,35 +54,28 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/sqlalchemy")
-def test_post(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    return {"data": posts}
-
-
 @app.get("/posts")
-def root(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("""select * from posts""")
     # posts = cursor.fetchall()
 
     posts = db.query(models.Post).all()
 
-    return {"message": posts}
+    return posts
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
+def create_posts(post: PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""insert into posts (title, content, published) values (%s, %s, %s) returning *""",
     #                (post.title, post.content, post.published))
     # new_post = cursor.fetchone()
     # conn.commit()
-    print(post.dict())
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
 
-    return {"data": new_post}
+    return new_post
 
 
 @app.get("/posts/{idx}")
@@ -105,7 +90,7 @@ def get_post(idx: int, db: Session = Depends(get_db)):
                             detail=f'post with id: {idx} was not found')
         # response.status_code = status.HTTP_404_NOT_FOUND
         # return {'message': f'post with id: {idx} was not found'}
-    return {"post_det": post}
+    return post
 
 
 # it will make an error coz it is after get post method
@@ -132,7 +117,7 @@ def delete_post(idx: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{idx}")
-def update_post(updated_post: Post, idx: int, db: Session = Depends(get_db)):
+def update_post(updated_post: PostCreate, idx: int, db: Session = Depends(get_db)):
     # cursor.execute("""update posts set title = %s, content = %s, published = %s where id = %s returning *""",
     #                (post.title, post.content, post.published, idx))
     # updated_post = cursor.fetchone()
@@ -147,4 +132,4 @@ def update_post(updated_post: Post, idx: int, db: Session = Depends(get_db)):
     post_query.update(updated_post.dict(), synchronize_session=False)
     db.commit()
 
-    return {'data': post_query.first()}
+    return post_query.first()
