@@ -1,5 +1,6 @@
 import time
-
+from typing import List
+from passlib.context import CryptContext
 import psycopg2
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from psycopg2.extras import RealDictCursor
@@ -8,8 +9,9 @@ from sqlalchemy.orm import Session
 # import app.models as models
 from . import models
 from .database import engine, get_db
-from .schemas import PostCreate, PostResponse
+from .schemas import PostCreate, PostResponse, UserCreate, UserOut
 
+pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -54,7 +56,7 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("""select * from posts""")
     # posts = cursor.fetchall()
@@ -78,7 +80,7 @@ def create_posts(post: PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@app.get("/posts/{idx}")
+@app.get("/posts/{idx}", response_model=PostResponse)
 def get_post(idx: int, db: Session = Depends(get_db)):
     # cursor.execute("""select * from posts where id = %s""", (idx,))
     # post = cursor.fetchone()
@@ -116,7 +118,7 @@ def delete_post(idx: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{idx}")
+@app.put("/posts/{idx}", response_model=PostResponse)
 def update_post(updated_post: PostCreate, idx: int, db: Session = Depends(get_db)):
     # cursor.execute("""update posts set title = %s, content = %s, published = %s where id = %s returning *""",
     #                (post.title, post.content, post.published, idx))
@@ -133,3 +135,16 @@ def update_post(updated_post: PostCreate, idx: int, db: Session = Depends(get_db
     db.commit()
 
     return post_query.first()
+
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserOut)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    # hash password
+    hashed_password = pwd_context.hash(user.password)
+    user.password = hashed_password
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
