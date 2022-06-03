@@ -8,10 +8,13 @@ from ..database import get_db
 from ..schemas import PostCreate, PostResponse
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts",
+    tags=['Posts']
+)
 
 
-@router.get("/posts", response_model=List[PostResponse])
+@router.get("/", response_model=List[PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("""select * from posts""")
     # posts = cursor.fetchall()
@@ -21,7 +24,7 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
 def create_posts(post: PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""insert into posts (title, content, published) values (%s, %s, %s) returning *""",
     #                (post.title, post.content, post.published))
@@ -35,7 +38,7 @@ def create_posts(post: PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.get("/posts/{idx}", response_model=PostResponse)
+@router.get("/{idx}", response_model=PostResponse)
 def get_post(idx: int, db: Session = Depends(get_db)):
     # cursor.execute("""select * from posts where id = %s""", (idx,))
     # post = cursor.fetchone()
@@ -51,12 +54,12 @@ def get_post(idx: int, db: Session = Depends(get_db)):
 
 
 # it will make an error coz it is after get post method
-# @router.get("/posts/latest")
+# @router.get("//latest")
 # def get_latest_post():
 #     return {'my latest post': my_post[-1]}
 
 
-@router.delete("/posts/{idx}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{idx}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(idx: int, db: Session = Depends(get_db)):
     # cursor.execute("""delete from posts where id = %s returning *""", (idx,))
     # deleted_post = cursor.fetchone()
@@ -73,7 +76,7 @@ def delete_post(idx: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/posts/{idx}", response_model=PostResponse)
+@router.put("/{idx}", response_model=PostResponse)
 def update_post(updated_post: PostCreate, idx: int, db: Session = Depends(get_db)):
     # cursor.execute("""update posts set title = %s, content = %s, published = %s where id = %s returning *""",
     #                (post.title, post.content, post.published, idx))

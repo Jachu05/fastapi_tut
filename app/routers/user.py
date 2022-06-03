@@ -7,10 +7,13 @@ from .. import models, utils
 from ..database import get_db
 from ..schemas import UserOut, UserCreate
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/users",
+    tags=['Users']
+)
 
 
-@router.get("/users", response_model=List[UserOut])
+@router.get("/", response_model=List[UserOut])
 def get_users(db: Session = Depends(get_db)):
     # cursor.execute("""select * from posts""")
     # posts = cursor.fetchall()
@@ -20,7 +23,7 @@ def get_users(db: Session = Depends(get_db)):
     return users
 
 
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserOut)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserOut)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     # hash password
     hashed_password = utils.hash(user.password)
@@ -33,7 +36,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.get("/users/{idx}", response_model=UserOut)
+@router.get("/{idx}", response_model=UserOut)
 def get_user(idx: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == idx).first()
 
