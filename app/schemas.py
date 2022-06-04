@@ -17,6 +17,7 @@ class PostCreate(PostBase):
 class PostResponse(PostBase):
     id: int
     created_at: datetime
+    owner_id: int
 
     # convert class to be a valid dict, in other case it will be return just as sql object
     class Config:
