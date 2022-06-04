@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..database import get_db
 from ..schemas import PostCreate, PostResponse
+from ..oauth2 import get_current_user
 
 
 router = APIRouter(
@@ -25,7 +26,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
-def create_posts(post: PostCreate, db: Session = Depends(get_db)):
+def create_posts(post: PostCreate, db: Session = Depends(get_db), get_user: int = Depends(get_current_user)):
     # cursor.execute("""insert into posts (title, content, published) values (%s, %s, %s) returning *""",
     #                (post.title, post.content, post.published))
     # new_post = cursor.fetchone()
