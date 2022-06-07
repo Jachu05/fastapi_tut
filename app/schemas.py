@@ -24,6 +24,9 @@ class UserLogin(BaseModel):
 
 
 class PostBase(BaseModel):
+    class Config:
+        orm_mode = True
+
     title: str
     content: str
     published: bool = True
@@ -40,6 +43,14 @@ class PostResponse(PostBase):
     owner: UserOut
 
     # convert class to be a valid dict, in other case it will be return just as sql object
+    # class Config:
+    #     orm_mode = True
+
+
+class PostOut(BaseModel):
+    Post: PostBase
+    votes: int
+
     class Config:
         orm_mode = True
 

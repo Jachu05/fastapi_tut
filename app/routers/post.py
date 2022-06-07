@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..database import get_db
 from ..oauth2 import get_current_user
-from ..schemas import PostCreate, PostResponse
+from ..schemas import PostCreate, PostResponse, PostOut
 
 router = APIRouter(
     prefix="/posts",
@@ -15,20 +15,24 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/", response_model=List[PostOut])
+# @router.get("/")
 def get_posts(db: Session = Depends(get_db), current_user: int = Depends(get_current_user), limit: int = 10,
               skip: int = 0, search: Optional[str] = ""):
     # cursor.execute("""select * from posts""")
     # posts = cursor.fetchall()
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    # posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
 
-    results = db.query(models.Post,
-                       func.count(models.Vote.post_id).label('votes')).join(models.Vote,
-                                                                            models.Vote.post_id == models.Post.id,
-                                                                            isouter=True).group_by(
-        models.Post.id).all()
-    print(results)
-    return results
+    posts = db.query(
+        models.Post, func.count(models.Vote.post_id).label('votes')
+    ).join(
+        models.Vote, models.Vote.post_id == models.Post.id, isouter=True
+    ).group_by(
+        models.Post.id
+    ).filter(
+        models.Post.title.contains(search)
+    ).limit(limit).offset(skip).all()
+    return posts
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
@@ -46,12 +50,19 @@ def create_posts(post: PostCreate, db: Session = Depends(get_db), current_user=D
     return new_post
 
 
-@router.get("/{idx}", response_model=PostResponse)
+@router.get("/{idx}", response_model=PostOut)
 def get_post(idx: int, db: Session = Depends(get_db), current_user: int = Depends(get_current_user)):
     # cursor.execute("""select * from posts where id = %s""", (idx,))
     # post = cursor.fetchone()
-    post = db.query(models.Post).filter(models.Post.id == idx).first()
-    print(post)
+    # post = db.query(models.Post).filter(models.Post.id == idx).first()
+
+    post = db.query(
+        models.Post, func.count(models.Vote.post_id).label('votes')
+    ).join(
+        models.Vote, models.Vote.post_id == models.Post.id, isouter=True
+    ).group_by(models.Post.id).filter(
+        models.Post.id == idx
+    ).first()
 
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
