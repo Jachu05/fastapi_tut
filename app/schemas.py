@@ -48,7 +48,7 @@ class PostResponse(PostBase):
 
 
 class PostOut(BaseModel):
-    Post: PostBase
+    Post: PostResponse
     votes: int
 
     class Config:
