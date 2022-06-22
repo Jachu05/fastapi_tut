@@ -13,7 +13,7 @@ sqlalchemy_database_url = f'postgresql://{settings.database_username}:{settings.
 
 engine = create_engine(sqlalchemy_database_url)
 
-test_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+test_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 
 @pytest.fixture
@@ -55,6 +55,20 @@ def test_user(client, session):
 
 
 @pytest.fixture
+def test_user2(client, session):
+    user_data = {
+        "email": "hello1234@xd.pl",
+        "password": "password123"
+    }
+    res = client.post("/users/", json=user_data)
+    assert res.status_code == 201
+
+    new_user = res.json()
+    new_user['password'] = user_data['password']
+    return new_user
+
+
+@pytest.fixture
 def token(test_user):
     return create_access_token(data={"user_id": test_user['id']})
 
@@ -69,7 +83,7 @@ def authorize_client(client, token):
 
 
 @pytest.fixture
-def test_posts(test_user, session):
+def test_posts(test_user, session, test_user2):
     posts_data = [
         {
             "title": "first title",
@@ -87,9 +101,14 @@ def test_posts(test_user, session):
             "owner_id": test_user['id']
         },
         {
-            "title": "3rd title",
-            "content": "3rd content",
+            "title": "4rd title",
+            "content": "4rd content",
             "owner_id": test_user['id']
+        },
+        {
+            "title": "5rd title",
+            "content": "5rd content",
+            "owner_id": test_user2['id']
         }
     ]
 
