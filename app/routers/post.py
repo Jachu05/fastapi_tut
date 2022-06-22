@@ -119,4 +119,6 @@ def update_post(updated_post: PostCreate, idx: int, db: Session = Depends(get_db
     post_query.update(updated_post.dict(), synchronize_session=False)
     db.commit()
 
+    print(post_exec.title)
+
     return post_exec

@@ -100,11 +100,13 @@ def test_unauthorized_update_post(client, test_posts):
 def test_update_post_success(authorize_client, test_posts):
     data = {'title': 'updated_title',
             'content': 'updated_content'}
-    res = authorize_client.put(f"/posts/{test_posts[0].id}", json=data)
-    post = schemas.PostResponse(**res.json())
+    authorize_client.put(f"/posts/{test_posts[0].id}", json=data)
+    res = authorize_client.get(f"/posts/{test_posts[0].id}")
+    updated_post = schemas.PostOut(**res.json())
     assert res.status_code == 200
-    assert post.title == data['title']
-    assert post.id == test_posts[0].id
+    assert updated_post.Post.title == data['title']
+    assert updated_post.Post.content == data['content']
+    assert updated_post.Post.id == test_posts[0].id
 
 
 def test_update_post_non_exist(authorize_client, test_posts):
