@@ -22,7 +22,7 @@ jobs:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
     runs-on: ubuntu-latest
     steps:
-      - name: pulling git repo
+      - name: pulling git repository
         uses: actions/checkout@v2
       - name: install python 3.9
         uses: actions/setup-python@v2
